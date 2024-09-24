@@ -1,0 +1,122 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Auth {
+  accessToken: String!
+}
+
+input CreateOrderInput {
+  customerName: String!
+  orderDate: DateTime!
+  orderItems: [OrderItemInput!]!
+  status: String!
+}
+
+input CreateProductInput {
+  description: String!
+  imageUrl: String
+  name: String!
+  price: Float!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  createOrder(createOrderInput: CreateOrderInput!): Order!
+  createProduct(createProductInput: CreateProductInput!): Product!
+  createRandomOrder: Order!
+  login(loginUserInput: LoginUserInput!): Auth!
+  logout: Boolean!
+  refreshTokens: Auth!
+  register(registerUserInput: RegisterUserInput!): Auth!
+  removeProduct(id: Int!): Boolean!
+  updateOrderStatus(updateOrderInput: UpdateOrderInput!): Order!
+  updateProduct(updateProductInput: UpdateProductInput!): Product!
+}
+
+type Order {
+  customerName: String!
+  id: ID!
+  orderDate: DateTime!
+  orderItems: [OrderItem!]!
+  status: String!
+}
+
+type OrderItem {
+  id: ID!
+  price: Float!
+  product: Product!
+  quantity: Int!
+}
+
+input OrderItemInput {
+  price: Float!
+  productId: Int!
+  quantity: Int!
+}
+
+type Product {
+  description: String!
+  id: ID!
+  imageUrl: String
+  name: String!
+  price: Float!
+}
+
+type Query {
+  me: User!
+  order(id: Int!): Order!
+  orders(search: String): [Order!]!
+  product(id: Int!): Product!
+  products(search: String): [Product!]!
+  salesReport(endDate: String, startDate: String): SalesReport!
+}
+
+input RegisterUserInput {
+  email: String!
+  firstName: String!
+  lastName: String!
+  password: String!
+}
+
+type SalesOverTime {
+  date: String!
+  orders: Int!
+  sales: Float!
+}
+
+type SalesReport {
+  averageOrderValue: Float!
+  numberOfOrders: Int!
+  salesOverTime: [SalesOverTime!]
+  totalSales: Float!
+}
+
+input UpdateOrderInput {
+  id: Int!
+  status: String!
+}
+
+input UpdateProductInput {
+  description: String!
+  id: Int!
+  imageUrl: String
+  name: String!
+  price: Float!
+}
+
+type User {
+  email: String!
+  firstName: String!
+  id: ID!
+  lastName: String!
+}

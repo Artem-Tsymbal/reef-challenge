@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:13-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: reef_challenge_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - reef_challenge_network
+
+  backend:
+    build: ./backend
+    container_name: backend
+    depends_on:
+      - postgres
+    env_file:
+      - ./backend/.env
+    volumes:
+      - /app/node_modules
+    command: >
+      sh -c "yarn build && npx typeorm migration:run -d dist/ormconfig.js && node dist/main.js"
+    ports:
+      - "5001:5001"
+    networks:
+      - reef_challenge_network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    env_file:
+      - ./frontend/.env
+    networks:
+      - reef_challenge_network
+
+volumes:
+  postgres_data:
+
+networks:
+  reef_challenge_network:
+    driver: bridge
