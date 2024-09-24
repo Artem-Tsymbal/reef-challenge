@@ -5,15 +5,21 @@ import { Order } from './entities/order.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ProductsService } from '../products/products.service';
 import { OrderItem } from '../order-items/entities/order-item.entity';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 describe('OrdersService', () => {
 	let service: OrdersService;
 	let ordersRepository: Repository<Order>;
 	let productsService: Partial<ProductsService>;
+	let notificationsGateway: Partial<NotificationsGateway>;
 
 	beforeEach(async () => {
 		productsService = {
 			findOne: jest.fn(),
+		};
+
+		notificationsGateway = {
+			sendOrderNotification: jest.fn(),
 		};
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -26,6 +32,10 @@ describe('OrdersService', () => {
 				{
 					provide: ProductsService,
 					useValue: productsService,
+				},
+				{
+					provide: NotificationsGateway,
+					useValue: notificationsGateway,
 				},
 			],
 		}).compile();
@@ -161,39 +171,43 @@ describe('OrdersService', () => {
 		});
 	});
 
-	describe('getSalesReport', () => {
-		it('should return sales report', async () => {
-			const orders = [
-				{
-					id: 1,
-					orderDate: new Date('2023-01-15'),
-					orderItems: [{ price: 10, quantity: 2 }],
-				},
-				{
-					id: 2,
-					orderDate: new Date('2023-02-20'),
-					orderItems: [{ price: 15, quantity: 1 }],
-				},
-			];
+	it('should return sales report', async () => {
+		const orders = [
+			{
+				id: 1,
+				orderDate: new Date('2023-01-15'),
+				orderItems: [{ price: 10, quantity: 2 }],
+			},
+			{
+				id: 2,
+				orderDate: new Date('2023-02-20'),
+				orderItems: [{ price: 15, quantity: 1 }],
+			},
+		];
 
-			jest.spyOn(ordersRepository, 'find').mockResolvedValue(orders as any);
+		jest.spyOn(ordersRepository, 'find').mockResolvedValue(orders as any);
 
-			const result = await service.getSalesReport('2023-01-01', '2023-12-31');
+		const result = await service.getSalesReport('2023-01-01', '2023-12-31');
 
-			expect(ordersRepository.find).toHaveBeenCalledWith({
-				where: { orderDate: Between(new Date('2023-01-01'), new Date('2023-12-31')) },
-				relations: ['orderItems'],
-			});
-
-			const totalSales = 10 * 2 + 15 * 1;
-			const numberOfOrders = 2;
-			const averageOrderValue = totalSales / numberOfOrders;
-
-			expect(result).toEqual({
-				totalSales,
-				numberOfOrders,
-				averageOrderValue,
-			});
+		expect(ordersRepository.find).toHaveBeenCalledWith({
+			where: { orderDate: Between(new Date('2023-01-01'), new Date('2023-12-31')) },
+			relations: ['orderItems'],
 		});
+
+		const totalSales = 10 * 2 + 15 * 1;
+		const numberOfOrders = 2;
+		const averageOrderValue = totalSales / numberOfOrders;
+
+		const expectedReport = {
+			totalSales,
+			numberOfOrders,
+			averageOrderValue,
+			salesOverTime: [
+				{ date: '2023-01-15', sales: 20, orders: 1 },
+				{ date: '2023-02-20', sales: 15, orders: 1 },
+			],
+		};
+
+		expect(result).toEqual(expectedReport);
 	});
 });
